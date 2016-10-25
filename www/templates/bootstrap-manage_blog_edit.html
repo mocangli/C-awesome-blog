@@ -1,0 +1,122 @@
+{% extends 'bootstrap-base.html' %}
+{% block meta %}<!-- block meta  -->
+    <link rel="stylesheet" type="text/css" href="/static/styles/simditor.css">
+{% endblock %}
+
+{% block title %}创建日志{% endblock %}
+    
+{% block beforehead %}
+<script type="text/javascript" src="/static/scripts/jquery.min.js"></script>
+<script type="text/javascript" src="/static/scripts/module.js"></script>
+<script type="text/javascript" src="/static/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="/static/scripts/uploader.js"></script>
+<script type="text/javascript" src="/static/scripts/simditor.js"></script>
+
+<script>
+var
+    ID = '{{ id }}',
+    action = '{{ action }}';
+
+function initVM(blog) {
+    var editor = new Simditor({
+        textarea: $('[name=content]')
+  //optional options
+    });
+    editor.setValue(blog.content)
+    var vm = new Vue({
+        el: '#vm',
+        data: blog,
+        methods: {
+            submit: function (event) {
+                this.$data.content=editor.getValue();
+                event.preventDefault();
+                var $form = $('#vm').find('form');
+                $form.postJSON(action, this.$data, function (err, r) {
+                    if (err) {
+                        $form.showFormError(err);
+                    }
+                    else {
+                        return location.assign('/bootstrap/manage/blogs');
+                    }
+                });
+            }
+        }
+    });
+    $('#vm').show();
+}
+
+$(function () {
+    
+    if (ID) {
+        getJSON('/api/blogs/' + ID, function (err, blog) {
+            if (err) {
+                return fatal(err);
+            }
+            $('#loading').hide();
+            initVM(blog);
+        });
+    }
+    else {
+        $('#loading').hide();
+        initVM({
+            name: '',
+            summary: '',
+            content: ''
+        });
+    }
+});
+
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="col-md-5 uk-width-1-1 uk-margin-bottom">
+        <div class="uk-panel uk-panel-box">
+            <ul class="breadcrumb uk-breadcrumb">
+                <li><a href="/bootstrap/manage/comments">评论</a></li>
+                <li><a href="/bootstrap/manage/blogs">日志</a></li>
+                <li><a href="/bootstrap/manage/users">用户</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="error" class="col-md-1 uk-width-1-1">
+    </div>
+
+    <div id="loading" class="col-md-1 uk-width-1-1 uk-text-center">
+        <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> 正在加载...</span>
+    </div>
+
+    <div id="vm" class="col-md-10 uk-width-6-8">
+        <form v-on="submit: submit" class="form-horizontal uk-form uk-form-stacked">
+            <div class="uk-alert uk-alert-danger uk-hidden"></div>
+            <div class="form-group uk-form-row">
+                <label class="col-md-10 uk-form-label"> 标题:</label>
+                <div class="col-md-10 uk-form-controls">
+                    <input v-model="name" name="name" type="text" placeholder="标题" class="form-control uk-width-1-1">
+                </div>
+            </div>
+            <div class="form-group uk-form-row">
+                <label class="col-md-10 uk-form-label"> 摘要:</label>
+                <div class="col-md-10 uk-form-controls">
+                    <textarea v-model="summary" rows="6" name="summary" placeholder="摘要" class="form-control uk-width-1-1" style="resize:none;"></textarea>
+                </div>
+            </div>
+            <div class="form-group uk-form-row">
+                <label class="col-md-10 uk-form-label"> 内容:</label>
+                <div class="col-md-10 uk-form-controls">
+                    <textarea  rows="16" name="content" placeholder="内容" class="form-control uk-width-1-1" style="resize:none;"></textarea>
+                </div>
+            </div>
+            <div class="form-group uk-form-row">
+                <div class="col-md-10">
+                <button type="submit" class="btn btn-primary uk-button uk-button-primary"><i class="glyphicon glyphicon-floppy-saved uk-icon-save"></i> 保存</button>
+                <a href="/bootstrap/manage/blogs" class="btn btn-default uk-button"><i class="glyphicon glyphicon-remove uk-icon-times"></i> 取消</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+{% endblock %}
